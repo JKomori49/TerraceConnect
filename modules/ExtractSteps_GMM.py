@@ -1,18 +1,10 @@
 import rasterio
 from rasterio.transform import from_origin
-from affine import Affine
 import numpy as np
-#import cupy as cp
-from scipy.stats import invgamma, norm, sigmaclip
-import math
-from scipy.interpolate import splev, splprep
 from sklearn.mixture import GaussianMixture
 from sklearn.utils import resample
 import matplotlib.pyplot as plt
-from Warp import ReadProfileFile,bspline,normal
 import time
-
-
 
 def ReadParamFile(file_path):
     # Dictionary to store the variables
@@ -464,7 +456,3 @@ def main(DATAMAP, DATAPARAM, outfile):
     
     time03 = time.time()
     print(f"Classification: {(time03 - time02)/60:.5f} mins")
-    
-
-if __name__ == "__main__":
-    main()
