@@ -1,4 +1,4 @@
-import Warp,ExtractSteps_GMM,resulttotiff
+from modules import Warp,ExtractSteps_GMM,resulttotiff
 DATAPROFILE = "profile_sunosaki.dat"
 DATAPARAM = "params_sunosaki.dat"
 DATAMAP = "Sunosaki.tif"
