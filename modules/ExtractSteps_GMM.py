@@ -76,10 +76,12 @@ def find_segments_write(P, r, dz):
     
     return segments,segments_out
 
-def cliffs(src,r,dz,Xmin,Xmax,Hmin,Hmax,dw,margin,fill):
+def cliffs(src,r,dz,Xmin,Xmax,Hmin,Hmax,dw,fill):
     array = src.read(1)
     transform = src.transform
     
+    margin = (Hmax-Hmin)/10
+
     Nt = array.shape[1]
     dx = transform.a
     dy = abs(transform.e)
@@ -122,7 +124,7 @@ def cliffs_single(src,r,dz,Hmin,Hmax,dw,position,fill):
     array = src.read(1)
     transform = src.transform
     
-    margin = 2
+    margin = (Hmax-Hmin)/10
 
     Nt = array.shape[1]
     dx = transform.a
@@ -151,7 +153,6 @@ def cliffs_single(src,r,dz,Hmin,Hmax,dw,position,fill):
     ts_f = transect[(transect[:,1] > Hmin-margin) & (transect[:,1] < Hmax+margin)]
     ts_c = transect_copy[(transect_copy[:,1] > Hmin) & (transect_copy[:,1] < Hmax)]
         
-    #segments = find_segments(ts_f,r,dz)
     segments,segments_out = find_segments_write(ts_f,r,dz)
     segments_out = np.array(segments_out)
 
@@ -163,9 +164,7 @@ def cliffs_single(src,r,dz,Hmin,Hmax,dw,position,fill):
     extracted = extracted[1:,:]
     filtered_array = extracted[(extracted[:,2] > Hmin) & (extracted[:,2] < Hmax)]
     
-    #plt.plot(ts_f[:,0],ts_f[:,1])
     plt.plot(ts_c[:,0],ts_c[:,1])
-    #plt.plot(segments_out[:,0],segments_out[:,1])
     plt.scatter(filtered_array[:,1],filtered_array[:,2],c='green',marker ='o', s = 20.0)
     plt.show()
     
@@ -198,24 +197,30 @@ def GMMoutmean(data,K):
     
     return means
 
-def SingleSection(extracted,W,d,position):
-    Rmin = min(extracted[:,0])
-    Rmax = max(extracted[:,0])
-    L = Rmax-Rmin
+def GMMout(data,K):
+    gmm = GaussianMixture(n_components=K, covariance_type='full', random_state=42)
+    gmm.fit(data.reshape(-1, 1))
     
-    NI = 100
-
-    Result = []
-    PRCS = 0
-    STEP = 10
-
+    labels = gmm.predict(data.reshape(-1, 1))
+    means = gmm.means_.flatten()
+    covariances = gmm.covariances_.flatten()
+    weights = gmm.weights_
+    
+    return means,covariances,weights
+    
+def SingleSection(extracted,W,d,position,Kmin,Kmax):
     x0 = position-W/2
     x1 = x0+W
     AnalysisWindow = extracted[(x0 <= (extracted[:,0])) & ((extracted[:,0]) < x1)]
     Np = len(AnalysisWindow)
         
-    n_components_range = range(2, 10)
-        
+    n_components_range = range(Kmin, Kmax)
+    
+    # Create a figure and two subplots (side by side)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    ax1.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2],c='blue',marker ='o', s = 1.0)
+    ax2.hist(y, bins=60, orientation='horizontal', density=True, alpha=0.6, color='g')
+         
     y = AnalysisWindow[:,2]
     aic = []
     
@@ -225,72 +230,40 @@ def SingleSection(extracted,W,d,position):
         aic.append(gmm.aic(y.reshape(-1, 1)))
     
     optimal_n = n_components_range[np.argmin(aic)]
-    print(optimal_n)
-    GMMshowresult(y,optimal_n)
-    means = GMMoutmean(y,optimal_n)
-    print(means)
     
-    #plt.plot(n_components_range, aic, marker='o')
-    #plt.legend()
-    #plt.show()
+    means, covariances, weights = GMMout(y,optimal_n)
     
-def SingleSection_resample(extracted,W,d,position):
-    Rmin = min(extracted[:,0])
-    Rmax = max(extracted[:,0])
-    L = Rmax-Rmin
+    x = np.linspace(min(y), max(y), 1000)
+    for mean, cov, weight in zip(means, covariances, weights):
+        ax2.plot(weight * (1 / np.sqrt(2 * np.pi * cov)) * np.exp(-0.5 * (x - mean)**2 / cov), x, linewidth=2)
     
-    Result = []
-    PRCS = 0
-    STEP = 10
+    # Adjust layout for better display
+    plt.tight_layout()
 
-    x0 = position-W/2
-    x1 = x0+W
-    AnalysisWindow = extracted[(x0 <= (extracted[:,0])) & ((extracted[:,0]) < x1)]
-    Np = len(AnalysisWindow)
-        
-    n_components_range = range(2, 10)
-        
-    y = AnalysisWindow[:,2]
-    aic = []
-    y_resample = resample(y)
-    
-    for n_components in n_components_range:
-        gmm = GaussianMixture(n_components=n_components, covariance_type='full', random_state=42)
-        gmm.fit(y_resample.reshape(-1, 1))
-        aic.append(gmm.aic(y_resample.reshape(-1, 1)))
-    
-    GMMshowresult(y_resample,7)
-    optimal_n = n_components_range[np.argmin(aic)]
-    print(optimal_n)
-    means = GMMoutmean(y_resample,optimal_n)
-    print(means)
-    
-    #plt.plot(n_components_range, aic, marker='o')
-    #plt.legend()
-    #plt.show()
+    # Show both plots
+    plt.show()
     
 def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax):
-    Rmin = min(extracted[:,0])
-    Rmax = max(extracted[:,0])
-    L = Rmax-Rmin
-    
-    NI = 100
-    
     Result = []
     PRCS = 0
     STEP = 10
-
+    
     x0 = position-W/2
     x1 = x0+W
     AnalysisWindow = extracted[(x0 <= (extracted[:,0])) & ((extracted[:,0]) < x1)]
     Np = len(AnalysisWindow)
-        
-    #plt.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2],marker ='o', s = 1.0)
     
     n_components_range = range(Kmin, Kmax)
-        
+    
+    # Create a figure and two subplots (side by side)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 6))
+    ax1.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2],c='blue',marker ='o', s = 1.0)
+    ax1.set_xlabel('Distance along profile (x) [m]')
+    ax1.set_ylabel('Elevation [m]')
+    
     y = AnalysisWindow[:,2]
-    #plt.hist(y, bins=50, range=(0,500), density=True, alpha=0.6, color='g')
+    ax2.hist(y, bins=60, orientation='horizontal', density=True, alpha=0.6, color='g')
+    ax2.set_xlabel('Probability density')
     
     for bs in range(n_bootstrap):
         y_resample = resample(y)
@@ -311,14 +284,17 @@ def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax):
             PRCS += STEP
             print(f"{PRCS}% complete")
     Result = np.array(Result)
-    plt.hist(Result, bins=100, range=(0,50), density=False, alpha=0.6, color='g')
-    counts, bin_edges = np.histogram(Result, bins=50, range=(0,500))
-    print(counts)
+    scale_factor = n_bootstrap/100
+    ax3.hist(Result, bins=100,weights=np.ones_like(Result) / scale_factor, orientation='horizontal',density=False, alpha=0.6, color='b')
+    ax3.set_xlabel('Detection probability [%]')
+    
+    # Adjust layout for better display
+    plt.tight_layout()
 
-#    plt.legend()
+    # Show all plots
     plt.show()
     
-def MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,Nbin):
+def MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint):
     Rmin = min(extracted[:,0])
     Rmax = max(extracted[:,0])
     
@@ -332,6 +308,8 @@ def MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,Nbin):
     Result = []
 
     NoresultRange = int((Rmin - W/2)//d)
+
+    Nbin = int((Hmax-Hmin)/zint)
     ResultZero = np.zeros(Nbin)
     for i in range(NoresultRange):
         Result.append(ResultZero)
@@ -368,11 +346,8 @@ def MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,Nbin):
             print(f"{PRCS}% complete")
     
     Result = np.array(Result)
-    np.savetxt('result.txt', Result, fmt='%d')
+    return Result
     
-    #plt.imshow(Result.T, cmap='plasma')
-    #plt.show()
-    return(Result)
 
 def MultiSections(extracted,W,d,Kmin,Kmax):
     Rmin = min(extracted[:,0])
@@ -413,10 +388,13 @@ def MultiSections(extracted,W,d,Kmin,Kmax):
 
     return(Result)
         
-def main(DATAMAP, DATAPARAM, outfile):
+def main(DATAMAP,DATAPARAM):
     time01 = time.time()
     
-    variables = ReadParamFile(DATAPARAM)
+    MAPFILE=f"Warped//Warped_{DATAMAP}"
+    PARAMFILE=f"config//{DATAPARAM}"
+
+    variables = ReadParamFile(PARAMFILE)
     
     r = variables['r']
     dz = variables['dz']
@@ -424,35 +402,50 @@ def main(DATAMAP, DATAPARAM, outfile):
     Hmax = variables['Hmax']
     dw = variables['dw']
     
-    position = 900
-    Xmin = 0
-    Xmax = 2300
+    mode = int(variables['mode'])
+    fill = int(variables['Fill'])
+    position = variables['position']
     
+    #Get X range
+    with rasterio.open(MAPFILE) as src:
+        transform = src.transform
+        height = src.height
+        max_y = transform[5]  # transform[5] is the y-coordinate of the top-left corner
+        min_y = transform[5] + (transform[4] * height)  # transform[4] is usually a negative scale (vertical interval)
+    Xmin = max_y
+    Xmax = -min_y
+    
+    if mode==1:
+        with rasterio.open(MAPFILE) as src:
+            cliffs_single(src,r,dz,Hmin,Hmax,dw,position,fill)
+        time02 = time.time()
 
-    with rasterio.open(DATAMAP) as src:
-        #extracted = cliffs(src,r,dz,Xmin,Xmax,Hmin,Hmax,dw,margin=5,fill=1)
-        cliffs_single(src,r,dz,Hmin,Hmax,dw,position,fill=1)
-    #print(len(extracted))
+    else:
+        with rasterio.open(MAPFILE) as src:
+            extracted = cliffs(src,r,dz,Xmin,Xmax,Hmin,Hmax,dw,fill)
+        print(f"{len(extracted)} points extracted")
+        time02 = time.time()
+        d = variables['dx']
+        W = variables['Wr']
+        n_bootstrap = int(variables['n_bootstrap'])
+        Kmin = int(variables['Kmin'])
+        Kmax = int(variables['Kmax'])
+        zint = variables['zint']
 
-
-    time02 = time.time()
+        if mode==2:
+            SingleSection(extracted,W,d,position,Kmin,Kmax)
+        elif mode==3:
+            SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax)
+        elif mode==4:
+            temp = DATAMAP.replace(".tif", ".dat")
+            OUTFILE=f"OUT//{temp}"
+            Result = MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint)
+            Resultnorm = Result/n_bootstrap*100
+            np.savetxt(OUTFILE, Resultnorm, fmt='%d')
+    
     
     print(f"Cliff extraction: {(time02 - time01)/60:.5f} mins")
-    #plt.scatter(extracted[:,0],extracted[:,2],marker ='o', s = 1.0)
-    d = variables['dx']
-    W = variables['Wr']
-
-    #SingleSection(extracted,W,d,position)
-    #SingleSection_resample(extracted,W,d,position)
-    #SingleSection_Bootstrap(extracted,W,d,position,400,2,10)
-    
-    #Result = MultiSections_Bootstrap(extracted,W,d,100,2,11,Hmin,Hmax,400)
-    
-    #Result = MultiSections(extracted,W,d,2,7)
-    
-    #plt.scatter(Result[:,0],Result[:,1],marker ='o', s = 1.0)
-    
-    #plt.show()
     
     time03 = time.time()
     print(f"Classification: {(time03 - time02)/60:.5f} mins")
+    
