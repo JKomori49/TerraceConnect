@@ -188,7 +188,7 @@ def main(DATAMAP,DATAPROFILE,d,reverse):
     
     MAPFILE = f"..//DATA//{DATAMAP}"
     PROFFILE = f"..//config//{DATAPROFILE}"
-    OUTMAP = f"..//OUT//warped_{DATAMAP}"
+    OUTMAP = f"..//Warped//warped_{DATAMAP}"
 
     R,P = ReadProfileFile(PROFFILE)
     
