@@ -186,9 +186,9 @@ def main(DATAMAP,DATAPROFILE,d,reverse):
     #d: grid size for output warped data
     #reverse=0: lefthandside reverse=1: righthandside
     
-    MAPFILE = f"..//DATA//{DATAMAP}"
-    PROFFILE = f"..//config//{DATAPROFILE}"
-    OUTMAP = f"..//Warped//warped_{DATAMAP}"
+    MAPFILE = f"DATA//{DATAMAP}"
+    PROFFILE = f"config//{DATAPROFILE}"
+    OUTMAP = f"Warped//warped_{DATAMAP}"
 
     R,P = ReadProfileFile(PROFFILE)
     
@@ -236,7 +236,3 @@ def main(DATAMAP,DATAPROFILE,d,reverse):
         transform=transform
     ) as dst:
         dst.write(Warped, 1)  # Write data to the first band
-
-    
-if __name__ == "__main__":
-    main()
