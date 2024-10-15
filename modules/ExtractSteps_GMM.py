@@ -4,6 +4,8 @@ import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.utils import resample
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+import matplotlib.cm as cm
 import time
 
 def ReadParamFile(file_path):
@@ -207,7 +209,7 @@ def GMMout(data,K):
     weights = gmm.weights_
     
     return means,covariances,weights
-    
+
 def SingleSection(extracted,W,d,position,Kmin,Kmax):
     x0 = position-W/2
     x1 = x0+W
@@ -346,7 +348,40 @@ def MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint):
             print(f"{PRCS}% complete")
     
     Result = np.array(Result)
-    return Result
+    Resultnorm = Result/n_bootstrap*100
+
+    ResultShow = np.flipud(Resultnorm.T)
+    extent = [W/2, Rmax-W/2, Hmin, Hmax]
+
+    # Define the two colormaps (grayscale and viridis)
+    Th = int(256*0.3)
+    grayscale = LinearSegmentedColormap.from_list('grayscale', ['white', 'black'], N=256)
+    viridis = cm.get_cmap('viridis', 256-Th)
+
+    # Combine the two colormaps into one
+    colors = np.vstack((
+        grayscale(np.linspace(0, 1, 256))[:Th],  # Grayscale from 0 to 0.3
+        viridis(np.linspace(1, 0, 256-Th))     # Viridis from 0.3 to 1.0
+    ))
+
+    # Create the combined colormap
+    combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', colors)
+
+    plt.figure(figsize=(8,6))
+    plt.imshow(ResultShow, cmap=combined_cmap, aspect='auto',extent=extent)
+    # Add a color bar to show the intensity scale
+    plt.colorbar()
+
+    # Add labels and title
+    plt.title('Detection probability [%]')
+    plt.xlabel('Distance along coast (x) [m]')
+    plt.ylabel('Elevation [m]')
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
+
+    return Resultnorm
     
 
 def MultiSections(extracted,W,d,Kmin,Kmax):
@@ -425,6 +460,7 @@ def main(DATAMAP,DATAPARAM):
             extracted = cliffs(src,r,dz,Xmin,Xmax,Hmin,Hmax,dw,fill)
         print(f"{len(extracted)} points extracted")
         time02 = time.time()
+        print(f"Cliff extraction: {(time02 - time01)/60:.5f} mins")
         d = variables['dx']
         W = variables['Wr']
         n_bootstrap = int(variables['n_bootstrap'])
@@ -440,12 +476,6 @@ def main(DATAMAP,DATAPARAM):
             temp = DATAMAP.replace(".tif", ".dat")
             OUTFILE=f"OUT//{temp}"
             Result = MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint)
-            Resultnorm = Result/n_bootstrap*100
-            np.savetxt(OUTFILE, Resultnorm, fmt='%d')
-    
-    
-    print(f"Cliff extraction: {(time02 - time01)/60:.5f} mins")
-    
-    time03 = time.time()
-    print(f"Classification: {(time03 - time02)/60:.5f} mins")
-    
+            np.savetxt(OUTFILE, Result, fmt='%d')
+        time03 = time.time()
+        print(f"Classification: {(time03 - time02)/60:.5f} mins")
