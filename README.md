@@ -24,5 +24,23 @@ Range -1000 2000
 -5181.850   -115843.172
 -4601.342   -115843.172
 ```
-- **Range** specifies the output range perpendicular to the survey line.
+- **Range** specifies the output extent perpendicular to the survey line.
 - Under **Control Points**, list the vertices of the survey profile as a polyline. It is generatable using GIS software. Ensure the coordinate system matches that of the input DEM data.
+
+Next, run the following code as `TerraceConnect.py`:
+
+```python
+from modules import Warp
+DATAPROFILE = "profile.dat"
+DATAMAP = "DEM_FILENAME.tif"
+
+d = 10 #output grid size[m]
+reverse = 0 #direction of the survey profile
+
+Warp.main(DATAMAP,DATAPROFILE,d,reverse)
+```
+- `d`: Specifies the output grid size.
+- `reverse`: Controls the direction of the survey line. If `reverse=0`, the terrain on the left side of the line is output, and if `reverse=1`, the terrain on the right side is output.
+
+The output geotiff file will be saved in `/Warped`.
+
