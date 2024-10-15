@@ -4,6 +4,8 @@
 
 For more detailed information on the process, please refer to **Komori et al. (in prep)**.
 
+![](/doc/Overview.png)
+
 ## 1. Preparing DEM Data
 To begin, the DEM data needs to be reshaped into a rectangular form by warping it along a survey profile. Ensure both the source DEM data and the survey profile are prepared before running the script.
 
