@@ -32,7 +32,7 @@ Once the input files are ready, you can run the following code to process the DE
 ```python
 from modules import Warp
 DATAPROFILE = "profile.dat"
-DATAMAP = "DEM_FILENAME.tif"
+DATAMAP = "YOURDEMFILE.tif"
 
 d = 10 #output grid size[m]
 reverse = 0 #Direction of the survey profile
@@ -84,7 +84,7 @@ Once the warped DEM and input parameters are ready, you can run the following co
 ```python
 from modules import ExtractSteps_GMM
 DATAPARAM = "params.dat"
-DATAMAP = "DEM_FILENAME.tif"
+DATAMAP = "YOURDEMFILE.tif"
 
 ExtractSteps_GMM.main(DATAMAP,DATAPARAM)
 ```
