@@ -217,13 +217,13 @@ def SingleSection(extracted,W,d,position,Kmin,Kmax):
     Np = len(AnalysisWindow)
         
     n_components_range = range(Kmin, Kmax)
+    y = AnalysisWindow[:,2]
     
     # Create a figure and two subplots (side by side)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
     ax1.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2],c='blue',marker ='o', s = 1.0)
     ax2.hist(y, bins=60, orientation='horizontal', density=True, alpha=0.6, color='g')
          
-    y = AnalysisWindow[:,2]
     aic = []
     
     for n_components in n_components_range:
