@@ -168,6 +168,8 @@ def cliffs_single(src,r,dz,Hmin,Hmax,dw,position,fill):
     
     plt.plot(ts_c[:,0],ts_c[:,1])
     plt.scatter(filtered_array[:,1],filtered_array[:,2],c='green',marker ='o', s = 20.0)
+    plt.xlabel('Distance from profile (y) [m]')
+    plt.ylabel('Elevation [m]')
     plt.show()
     
 def GMMshowresult(data,K):
@@ -210,7 +212,7 @@ def GMMout(data,K):
     
     return means,covariances,weights
 
-def SingleSection(extracted,W,d,position,Kmin,Kmax):
+def SingleSection(extracted,W,d,position,Kmin,Kmax,Hmin,Hmax):
     x0 = position-W/2
     x1 = x0+W
     AnalysisWindow = extracted[(x0 <= (extracted[:,0])) & ((extracted[:,0]) < x1)]
@@ -218,12 +220,17 @@ def SingleSection(extracted,W,d,position,Kmin,Kmax):
         
     n_components_range = range(Kmin, Kmax)
     y = AnalysisWindow[:,2]
-    
+
     # Create a figure and two subplots (side by side)
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6), gridspec_kw={'width_ratios': [2, 1]})
     ax1.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2],c='blue',marker ='o', s = 1.0)
+    ax1.set_xlabel('Distance along profile (x) [m]')
+    ax1.set_ylabel('Elecation [m]')
+    ax1.set_ylim(Hmin, Hmax)
     ax2.hist(y, bins=60, orientation='horizontal', density=True, alpha=0.6, color='g')
-         
+    ax2.set_xlabel('Probability density')
+    ax2.set_ylim(Hmin, Hmax)
+    
     aic = []
     
     for n_components in n_components_range:
@@ -245,7 +252,7 @@ def SingleSection(extracted,W,d,position,Kmin,Kmax):
     # Show both plots
     plt.show()
     
-def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax):
+def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint):
     Result = []
     PRCS = 0
     STEP = 10
@@ -257,15 +264,19 @@ def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax):
     
     n_components_range = range(Kmin, Kmax)
     
+    Nbin = int((Hmax-Hmin)/zint)
+
     # Create a figure and two subplots (side by side)
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 6))
-    ax1.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2],c='blue',marker ='o', s = 1.0)
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 6), gridspec_kw={'width_ratios': [2, 1, 1]})
+    ax1.scatter(AnalysisWindow[:,0],AnalysisWindow[:,2], c='blue',marker ='o', s = 1.0)
     ax1.set_xlabel('Distance along profile (x) [m]')
     ax1.set_ylabel('Elevation [m]')
+    ax1.set_ylim(Hmin, Hmax)
     
     y = AnalysisWindow[:,2]
     ax2.hist(y, bins=60, orientation='horizontal', density=True, alpha=0.6, color='g')
     ax2.set_xlabel('Probability density')
+    ax2.set_ylim(Hmin, Hmax)
     
     for bs in range(n_bootstrap):
         y_resample = resample(y)
@@ -286,10 +297,10 @@ def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax):
             PRCS += STEP
             print(f"{PRCS}% complete")
     Result = np.array(Result)
-    scale_factor = n_bootstrap/100
-    ax3.hist(Result, bins=100,weights=np.ones_like(Result) / scale_factor, orientation='horizontal',density=False, alpha=0.6, color='b')
+    scale_factor = n_bootstrap/Nbin
+    ax3.hist(Result, bins=Nbin, weights=np.ones_like(Result) / scale_factor, orientation='horizontal',density=False, alpha=0.6, color='b')
     ax3.set_xlabel('Detection probability [%]')
-    
+    ax3.set_ylim(Hmin, Hmax)
     # Adjust layout for better display
     plt.tight_layout()
 
@@ -368,7 +379,7 @@ def MultiSections_Bootstrap(extracted,W,d,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint):
     combined_cmap = LinearSegmentedColormap.from_list('combined_cmap', colors)
 
     plt.figure(figsize=(8,6))
-    plt.imshow(ResultShow, cmap=combined_cmap, aspect='auto',extent=extent)
+    plt.imshow(ResultShow, cmap=combined_cmap, aspect='auto',extent=extent, vmin=0, vmax=100)
     # Add a color bar to show the intensity scale
     plt.colorbar()
 
@@ -469,9 +480,9 @@ def main(DATAMAP,DATAPARAM):
         zint = variables['zint']
 
         if mode==2:
-            SingleSection(extracted,W,d,position,Kmin,Kmax)
+            SingleSection(extracted,W,d,position,Kmin,Kmax,Hmin,Hmax)
         elif mode==3:
-            SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax)
+            SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax,Hmin,Hmax,zint)
         elif mode==4:
             temp = DATAMAP.replace(".tif", ".dat")
             OUTFILE=f"OUT//{temp}"
@@ -479,3 +490,7 @@ def main(DATAMAP,DATAPARAM):
             np.savetxt(OUTFILE, Result, fmt='%d')
         time03 = time.time()
         print(f"Classification: {(time03 - time02)/60:.5f} mins")
+    
+    
+    
+    
