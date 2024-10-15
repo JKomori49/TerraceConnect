@@ -46,6 +46,8 @@ Warp.main(DATAMAP,DATAPROFILE,d,reverse)
 
 The output GeoTIFF file will be saved in the `/Warped` directory.
 
+![](/doc/Warp.png)
+
 ## 2. Detecting Cliff Features and Terrace Distribution
 Before running the cliff feature detection, configure the parameters in `params.dat` located in the `/config` directory.
 ```
@@ -92,11 +94,19 @@ Proper parameter tuning is essential for running TerraceConnect. By switching be
 #### Mode 1: Cliff Detection on a Single Elevation Transect (`mode=1`)
 This mode displays the locations of cliffs detected along a transect at the x-location specified by `position`, according to the criteria set in `params.dat`.
 
+![](/doc/mode1.png)
+
 #### Mode 2: GMM Clustering in a specified Analysis Window (`mode=2`)
 This mode outputs the vertical histogram of the extracted cliff features from the selected analysis window, along with a GMM approximation. The analysis window is centered on the x-location specified by `position`.
+
+![](/doc/mode2.png)
     
 #### Mode 3: Bootstrap Results in a specified Analysis Window (`mode=3`)
 This mode outputs the histogram of the bootstrapping results from the selected analysis window.
+
+![](/doc/mode3.png)
     
 #### Mode 4: Bootstrap Evaluation Across the Entire Section (`mode=4`)
 This mode performs a bootstrap analysis across the entire warped DEM and outputs the detection probability in a color plot. The output grid data is saved to `OUT/DEM_FILENAME.dat` at the same time.
+
+![](/doc/mode4.png)
