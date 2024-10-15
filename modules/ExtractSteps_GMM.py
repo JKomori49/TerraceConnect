@@ -297,7 +297,7 @@ def SingleSection_Bootstrap(extracted,W,d,position,n_bootstrap,Kmin,Kmax,Hmin,Hm
             PRCS += STEP
             print(f"{PRCS}% complete")
     Result = np.array(Result)
-    scale_factor = n_bootstrap/Nbin
+    scale_factor = n_bootstrap/100
     ax3.hist(Result, bins=Nbin, weights=np.ones_like(Result) / scale_factor, orientation='horizontal',density=False, alpha=0.6, color='b')
     ax3.set_xlabel('Detection probability [%]')
     ax3.set_ylim(Hmin, Hmax)
