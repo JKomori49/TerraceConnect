@@ -1,0 +1,14 @@
+r	10.
+dz	0.7
+Hmin	0
+Hmax	40
+Wr	600
+dx	20
+dw  10
+mode    4
+Fill    1
+n_bootstrap 1000
+Kmin    3
+Kmax    8
+zint    0.5
+position    900
