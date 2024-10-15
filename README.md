@@ -39,8 +39,8 @@ Warp.main(DATAMAP,DATAPROFILE,d,reverse)
 ```
 - `d`: Specifies the output grid size in meters.
 - `reverse`: Controls the direction of the survey profile.
-    - `reverse=0`, Output terrain on the left side of the profile.
-    - `reverse=1`, Output terrain on the right side of the profile.
+    - `reverse=0`: Output terrain on the left side of the profile.
+    - `reverse=1`: Output terrain on the right side of the profile.
 
 The output GeoTIFF file will be saved in the `/Warped` directory.
 
