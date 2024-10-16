@@ -1,11 +1,20 @@
 import rasterio
 from rasterio.transform import from_origin
 from affine import Affine
-import cupy as cp
 import numpy as np
 import math
 from scipy.interpolate import splev, splprep
 import time
+
+# Try to import CuPy if available, fallback to NumPy if not
+try:
+    import cupy as cp
+    use_gpu = True
+    print("CuPy is available. Running in GPU mode.")
+except ImportError:
+    cp = np  # Fallback to NumPy
+    use_gpu = False
+    print("CuPy is not available. Running in CPU mode with NumPy.")
 
 def ReadProfileFile(DATAPROFILE):
     # Open the profile data and interpolating
