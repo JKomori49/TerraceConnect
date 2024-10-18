@@ -1,3 +1,5 @@
+![](/doc/Thumbnail-100.jpg)
+
 # TerraceConnect User Manual
 ## Overview
 **TerraceConnect.py** is a tool designed to automatically extract cliff features from DEM data of terrace landscapes and assist in determining the connectivity of synchronous terraces.
